@@ -34,7 +34,11 @@ void VTKparser::parse() {
             for (int i = 0; i < num_points; i++){
                 std::getline(file, line);
                 std::istringstream issL(line);
-                issL >> point_array->at(i).xyz[0] >> point_array->at(i).xyz[1] >> point_array->at(i).xyz[2];
+               long double x,y,z;
+                issL >> x >> y >> z;
+                point_array->at(i).xyz[0] = x;
+                point_array->at(i).xyz[1] = y;
+                point_array->at(i).xyz[2] = z;
             }
         } else if (keyword == "CELLS"){
             iss >> num_cells >> cell_list_size;
@@ -61,7 +65,6 @@ void VTKparser::parse() {
             std::istringstream iss_meta(line);
             std::string type, name, dtype;
             iss_meta >> type >> name >> dtype;
-            point_array = std::make_shared<std::vector<parse_point>>(num_points);
             for (int i = 0; i < num_points; i++){
                 std::getline(file, line);
                 std::istringstream issL(line);
@@ -105,6 +108,14 @@ std::shared_ptr<std::vector<double>> VTKparser::getVec3FromPID(int pid) {
     res_arr->at(0) = point_array->at(pid).xyz[0];
     res_arr->at(1) = point_array->at(pid).xyz[1];
     res_arr->at(2) = point_array->at(pid).xyz[2];
+    return res_arr;
+}
+
+std::shared_ptr<std::vector<double>> VTKparser::getBFromPID(int pid) {
+    std::shared_ptr<std::vector<double>> res_arr = std::make_shared<std::vector<double>>(3);
+    res_arr->at(0) = point_array->at(pid).vec[0];
+    res_arr->at(1) = point_array->at(pid).vec[1];
+    res_arr->at(2) = point_array->at(pid).vec[2];
     return res_arr;
 }
 

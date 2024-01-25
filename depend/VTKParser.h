@@ -42,6 +42,7 @@ class VTKparser {
         std::shared_ptr<std::vector<int>> getCellIDsFromPointIDs(int pid, int &numpts);
         std::shared_ptr<std::vector<parse_point>> getPointArray();
         std::shared_ptr<std::vector<parse_cell>> getCellArray();
+        std::shared_ptr<std::vector<double>> getBFromPID(int pid);
         [[nodiscard]] int getNumCells() const;
         [[nodiscard]] int getNumPoints() const;
 
