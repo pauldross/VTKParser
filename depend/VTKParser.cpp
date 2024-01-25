@@ -30,15 +30,15 @@ void VTKparser::parse() {
             iss >> num_points;
             std::string type;
             iss >> type;
-            point_array = std::make_unique<parse_point []>(num_points);
+            point_array = std::make_shared<std::vector<parse_point>>(num_points);
             for (int i = 0; i < num_points; i++){
                 std::getline(file, line);
                 std::istringstream issL(line);
-                issL >> point_array[i].xyz[0] >> point_array[i].xyz[1] >> point_array[i].xyz[2];
+                issL >> point_array->at(i).xyz[0] >> point_array->at(i).xyz[1] >> point_array->at(i).xyz[2];
             }
         } else if (keyword == "CELLS"){
             iss >> num_cells >> cell_list_size;
-            cell_array = std::make_unique<parse_cell []>(num_cells);
+            cell_array = std::make_shared<std::vector<parse_cell>>(num_cells);
 
             for (int i = 0; i < num_cells; i++) {
                 std::getline(file, line);
@@ -46,13 +46,13 @@ void VTKparser::parse() {
                 std::string keywordL;
                 int cellType;
                 issL >> cellType;
-                cell_array[i].cell_id = i;
-                cell_array[i].cell_length = cellType;
-                cell_array[i].point_ids = std::make_unique<int []>(cellType);
+                cell_array->at(i).cell_id = i;
+                cell_array->at(i).cell_length = cellType;
+                cell_array->at(i).point_ids = std::make_shared<std::vector<int>>(cellType);
                 for (int j = 0; j < cellType; ++j) {
                     int pointIndex;
                     issL >> pointIndex;
-                    cell_array[i].point_ids[j] = pointIndex;
+                    cell_array->at(i).point_ids->at(j) = pointIndex;
                 }
             }
 
@@ -61,25 +61,25 @@ void VTKparser::parse() {
             std::istringstream iss_meta(line);
             std::string type, name, dtype;
             iss_meta >> type >> name >> dtype;
-            point_array = std::make_unique<parse_point []>(num_points);
+            point_array = std::make_shared<std::vector<parse_point>>(num_points);
             for (int i = 0; i < num_points; i++){
                 std::getline(file, line);
                 std::istringstream issL(line);
-                issL >> point_array[i].vec[0] >> point_array[i].vec[1] >> point_array[i].vec[2];
+                issL >> point_array->at(i).vec[0] >> point_array->at(i).vec[1] >> point_array->at(i).vec[2];
             }
         }
     }
     // linking ie find all the cell ids for a point.
     for (int i = 0; i < num_cells; i++) {
         int numPoints;
-        std::unique_ptr<int[]> points_in_cell = getPointIDsFromCellId(i, numPoints);
+        std::shared_ptr<std::vector<int>> points_in_cell = getPointIDsFromCellId(i, numPoints);
         for (int j = 0; j < numPoints; j++){
-            add_cell_to_point(points_in_cell[j], i);
+            add_cell_to_point(points_in_cell->at(j), i);
         }
     }
 }
 
-std::unique_ptr<int[]> VTKparser::getPointIDsFromCellId(int cell_id, int &numPoints) {
+std::shared_ptr<std::vector<int>> VTKparser::getPointIDsFromCellId(int cell_id, int &numPoints) {
     if (!cell_array) {
         std::cerr << "Parser not initialized" << std::endl;
         return nullptr;
@@ -90,34 +90,34 @@ std::unique_ptr<int[]> VTKparser::getPointIDsFromCellId(int cell_id, int &numPoi
         return nullptr;
     }
 
-    numPoints = cell_array[cell_id].cell_length;
-    std::unique_ptr<int []> result_arr = std::make_unique<int []>(numPoints);
+    numPoints = cell_array->at(cell_id).cell_length;
+    std::shared_ptr<std::vector<int>> result_arr = std::make_shared<std::vector<int>>(numPoints);
 
     for (int i = 0; i < numPoints; i++) {
-        result_arr[i] = cell_array[cell_id].point_ids[i];
+        result_arr->at(i) = cell_array->at(cell_id).point_ids->at(i);
     }
 
     return result_arr;
 }
 
-std::unique_ptr<double[]> VTKparser::getVec3FromPID(int pid) {
-    std::unique_ptr<double []> res_arr = std::make_unique<double []>(3);
-    res_arr[0] = point_array[pid].xyz[0];
-    res_arr[1] = point_array[pid].xyz[1];
-    res_arr[2] = point_array[pid].xyz[2];
+std::shared_ptr<std::vector<double>> VTKparser::getVec3FromPID(int pid) {
+    std::shared_ptr<std::vector<double>> res_arr = std::make_shared<std::vector<double>>(3);
+    res_arr->at(0) = point_array->at(pid).xyz[0];
+    res_arr->at(1) = point_array->at(pid).xyz[1];
+    res_arr->at(2) = point_array->at(pid).xyz[2];
     return res_arr;
 }
 
 void VTKparser::add_cell_to_point(int pid, int cid) {
-    point_array[pid].cells.insert(cid);
+    point_array->at(pid).cells.insert(cid);
 }
 
-std::unique_ptr<int[]> VTKparser::getCellIDsFromPointIDs(int pid, int &numpts) {
-    numpts = (int) point_array[pid].cells.size();
-    std::unique_ptr<int []> res_array = std::make_unique<int []>(numpts);
+std::shared_ptr<std::vector<int>> VTKparser::getCellIDsFromPointIDs(int pid, int &numpts) {
+    numpts = (int) point_array->at(pid).cells.size();
+    std::shared_ptr<std::vector<int>> res_array = std::make_shared<std::vector<int>>(numpts);
     int i = 0;
-    for (auto x : point_array[pid].cells) {
-        res_array[i] = x;
+    for (auto x : point_array->at(pid).cells) {
+        res_array->at(i) = x;
         i++;
     }
     return res_array;
@@ -129,4 +129,12 @@ int VTKparser::getNumCells() const {
 
 int VTKparser::getNumPoints() const {
     return num_points;
+}
+
+std::shared_ptr<std::vector<parse_point>> VTKparser::getPointArray() {
+    return point_array;
+}
+
+std::shared_ptr<std::vector<parse_cell>> VTKparser::getCellArray() {
+    return cell_array;
 }
